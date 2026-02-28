@@ -1,0 +1,211 @@
+<!DOCTYPE html>
+<html lang="nl">
+<head>
+    <meta charset="UTF-8">
+    <meta http-equiv="X-UA-Compatible" content="IE=edge">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no">
+    <title>HackLearn Pro — Ultimate Edition</title>
+    
+    <meta name="apple-mobile-web-app-capable" content="yes">
+    <meta name="apple-mobile-web-app-status-bar-style" content="black-translucent">
+    <meta name="theme-color" content="#1a1a2e">
+
+    <style>
+        @import url('https://fonts.googleapis.com/css2?family=JetBrains+Mono:wght@400;700&family=Rajdhani:wght@500;700&display=swap');
+        
+        :root {
+            --bg: #1a1a2e; --bg2: #16213e; --card: #1e1e38; --red: #e94560;
+            --green: #0abe8c; --yellow: #f5a623; --blue: #4cc9f0; --text: #d8d8f0;
+            --muted: #7777a0; --border: #2a2a50; --tbg: #0d0d1a; --tgreen: #00ff88;
+        }
+
+        * { margin: 0; padding: 0; box-sizing: border-box; -webkit-tap-highlight-color: transparent; }
+        body { font-family: 'Rajdhani', sans-serif; background: var(--bg); color: var(--text); overflow-x: hidden; }
+
+        .layout { display: flex; min-height: 100vh; }
+        .sidebar { 
+            width: 260px; background: var(--bg2); border-right: 1px solid var(--border); 
+            display: flex; flex-direction: column; position: fixed; height: 100vh; z-index: 1000; transition: 0.3s;
+        }
+        .main { flex: 1; margin-left: 260px; min-height: 100vh; display: flex; flex-direction: column; }
+
+        @media (max-width: 900px) {
+            .sidebar { transform: translateX(-100%); }
+            .sidebar.open { transform: translateX(0); }
+            .main { margin-left: 0; }
+        }
+
+        .shead { padding: 20px; border-bottom: 1px solid var(--border); display: flex; align-items: center; gap: 10px; }
+        .skull { font-size: 1.5rem; background: var(--red); padding: 5px; border-radius: 8px; }
+        .brand { font-family: 'JetBrains Mono'; font-weight: 700; color: var(--red); }
+
+        .xp-box { padding: 20px; border-bottom: 1px solid var(--border); }
+        .xp-bar { height: 6px; background: var(--border); border-radius: 3px; margin-top: 8px; overflow: hidden; }
+        .xp-fill { height: 100%; background: linear-gradient(90deg, var(--red), var(--yellow)); width: 0%; transition: 0.5s; }
+
+        .nav-item { padding: 12px 20px; cursor: pointer; display: flex; align-items: center; gap: 10px; font-weight: 600; color: var(--muted); border-left: 4px solid transparent; }
+        .nav-item.active { color: var(--red); background: rgba(255,255,255,0.05); border-left-color: var(--red); }
+
+        .topbar { padding: 15px 20px; background: var(--bg2); border-bottom: 1px solid var(--border); display: flex; justify-content: space-between; align-items: center; position: sticky; top: 0; z-index: 900; }
+        .screen { display: none; padding: 20px; animation: fadeIn 0.3s; }
+        .screen.active { display: block; }
+        @keyframes fadeIn { from { opacity: 0; } to { opacity: 1; } }
+
+        .grid { display: grid; grid-template-columns: repeat(auto-fill, minmax(240px, 1fr)); gap: 20px; }
+        .card { background: var(--card); border-radius: 12px; border: 1px solid var(--border); overflow: hidden; cursor: pointer; transition: 0.2s; }
+        .card:hover { transform: translateY(-5px); border-color: var(--red); }
+        .card-banner { height: 70px; display: flex; align-items: center; justify-content: center; font-size: 2rem; }
+        .card-body { padding: 15px; }
+
+        .terminal { background: var(--tbg); border-radius: 10px; border: 1px solid var(--border); overflow: hidden; }
+        .term-out { height: 300px; padding: 15px; overflow-y: auto; font-family: 'JetBrains Mono'; font-size: 0.85rem; }
+        .term-in-wrap { display: flex; padding: 12px; background: #050510; border-top: 1px solid var(--border); }
+        .term-in { background: transparent; border: none; color: white; outline: none; flex: 1; font-family: 'JetBrains Mono'; font-size: 0.9rem; }
+        
+        .q-box { background: var(--card); padding: 20px; border-radius: 10px; margin-top: 20px; border: 1px solid var(--border); }
+        .opt { display: block; width: 100%; padding: 12px; margin-top: 10px; background: var(--bg); border: 1px solid var(--border); color: white; text-align: left; cursor: pointer; border-radius: 6px; }
+        .opt:hover { border-color: var(--blue); }
+
+        .btn { padding: 8px 15px; border-radius: 5px; border: none; cursor: pointer; font-family: 'JetBrains Mono'; font-weight: 700; font-size: 0.75rem; }
+        .btn-red { background: var(--red); color: white; }
+        .btn-ol { background: transparent; border: 1px solid var(--border); color: var(--text); }
+    </style>
+</head>
+<body>
+
+<div class="layout">
+    <aside class="sidebar" id="sidebar">
+        <div class="shead"><div class="skull">💀</div><div class="brand">HackLearn Pro</div></div>
+        <div class="xp-box">
+            <div id="rankLbl" style="font-size: 0.7rem; color: var(--yellow); font-weight: 700;">LEVEL 1 ROOKIE</div>
+            <div class="xp-bar"><div class="xp-fill" id="xpFill"></div></div>
+            <div id="xpLbl" style="font-size: 0.6rem; margin-top: 5px;">0 / 5000 XP</div>
+        </div>
+        <nav style="flex: 1;">
+            <div id="nav-dashboard" class="nav-item active" onclick="showScreen('dashboard')">🏠 Dashboard</div>
+            <div id="nav-lessons" class="nav-item" onclick="showScreen('lessons')">📚 Lessen</div>
+            <div id="nav-attackbox" class="nav-item" onclick="showScreen('attackbox')">💻 AttackBox</div>
+        </nav>
+        <div style="padding: 15px; border-top: 1px solid var(--border);">
+            <div style="display: flex; gap: 5px;">
+                <button class="btn btn-ol" style="flex: 1" onclick="exportProgress()">📤 Sync</button>
+                <button class="btn btn-ol" style="flex: 1" onclick="resetProgress()">Reset</button>
+            </div>
+        </div>
+    </aside>
+
+    <main class="main">
+        <header class="topbar">
+            <button class="btn btn-ol" onclick="toggleSidebar()">☰ Menu</button>
+            <div id="bread" style="font-family: 'JetBrains Mono'; color: var(--red); font-size: 0.8rem;">DASHBOARD</div>
+        </header>
+
+        <section id="screen-dashboard" class="screen active">
+            <div style="background: var(--bg2); padding: 25px; border-radius: 12px; border: 1px solid var(--border); margin-bottom: 20px;">
+                <h2>Master Pentesting</h2>
+                <p>Georgia Weidman's volledige curriculum. Verzamel XP en ontgrendel rangen.</p>
+            </div>
+            <div class="grid" id="chapterGrid"></div>
+        </section>
+
+        <section id="screen-lessons" class="screen">
+            <div id="lessonContent"></div>
+        </section>
+
+        <section id="screen-attackbox" class="screen">
+            <div class="terminal">
+                <div class="term-out" id="termOut">
+                    <div style="color: var(--tgreen);">KALI LINUX PRO v3.0 - Ready</div>
+                </div>
+                <div class="term-in-wrap">
+                    <span style="color: var(--tgreen); margin-right: 10px;">$</span>
+                    <input type="text" id="termIn" class="term-in" onkeydown="handleTerm(event)" autocomplete="off">
+                </div>
+            </div>
+        </section>
+    </main>
+</div>
+
+<script>
+    const rooms = [
+        {id:0, title:'Lab Setup', icon:'🧪', xp:100, bg:'#0f3460', q:'Wat is de veiligste netwerkmodus?', opts:['Host-Only','NAT','Bridged'], ans:0},
+        {id:1, title:'Verkenning', icon:'🔍', xp:120, bg:'#1a1a2e', q:'Welke tool voor DNS transfers?', opts:['Ping','dnsrecon','Whois'], ans:1},
+        {id:2, title:'Scanning', icon:'📡', xp:150, bg:'#16213e', q:'Wat doet Nmap -sV?', opts:['Snelle scan','Versiedetectie','OS-detectie'], ans:1},
+        {id:4, title:'Metasploit', icon:'⚡', xp:200, bg:'#2d0a14', q:'Wat is een Payload?', opts:['Code na exploit','De scanner','Een firewall'], ans:0}
+    ];
+
+    let state = JSON.parse(localStorage.getItem('hl_data')) || { xp: 0, done: [] };
+
+    function save() { localStorage.setItem('hl_data', JSON.stringify(state)); }
+
+    function updateStats() {
+        document.getElementById('xpLbl').innerText = `${state.xp} / 5000 XP`;
+        document.getElementById('xpFill').style.width = Math.min(100, (state.xp / 5000) * 100) + '%';
+        let lvl = Math.floor(state.xp / 500) + 1;
+        document.getElementById('rankLbl').innerText = `LEVEL ${lvl} PENTESTER`;
+        save();
+    }
+
+    function renderDashboard() {
+        const grid = document.getElementById('chapterGrid');
+        grid.innerHTML = rooms.map(r => `
+            <div class="card" onclick="openModule(${r.id})">
+                <div class="card-banner" style="background:${r.bg}">${r.icon}</div>
+                <div class="card-body">
+                    <strong>${r.title}</strong>
+                    <div style="font-size:0.65rem; color:var(--muted);">${state.done.includes(r.id) ? '✅ VOLTOOID' : 'START OEFENING'}</div>
+                </div>
+            </div>
+        `).join('');
+    }
+
+    function openModule(id) {
+        const m = rooms.find(r => r.id === id);
+        showScreen('lessons');
+        const done = state.done.includes(id);
+        document.getElementById('lessonContent').innerHTML = `
+            <h2>${m.title}</h2>
+            <div class="q-box">
+                <p>${m.q}</p>
+                ${m.opts.map((o,i) => `<button class="opt" onclick="check(${id},${i})" ${done?'disabled':''}>${o}</button>`).join('')}
+            </div>
+        `;
+    }
+
+    function check(id, idx) {
+        const m = rooms.find(r => r.id === id);
+        if(m.ans === idx) {
+            if(!state.done.includes(id)) {
+                state.xp += m.xp;
+                state.done.push(id);
+                updateStats(); renderDashboard();
+            }
+            alert("Correct!"); openModule(id);
+        } else alert("Onjuist.");
+    }
+
+    function showScreen(id) {
+        document.querySelectorAll('.screen').forEach(s => s.classList.remove('active'));
+        document.querySelectorAll('.nav-item').forEach(n => n.classList.remove('active'));
+        document.getElementById('screen-'+id).classList.add('active');
+        document.getElementById('nav-'+id)?.classList.add('active');
+        document.getElementById('bread').innerText = id.toUpperCase();
+        document.getElementById('sidebar').classList.remove('open');
+    }
+
+    function handleTerm(e) {
+        if(e.key === 'Enter') {
+            const out = document.getElementById('termOut');
+            out.innerHTML += `<div>$ ${e.target.value}</div>`;
+            e.target.value = ''; out.scrollTop = out.scrollHeight;
+        }
+    }
+
+    function toggleSidebar() { document.getElementById('sidebar').classList.toggle('open'); }
+    function exportProgress() { prompt("Sync code:", btoa(JSON.stringify(state))); }
+    function resetProgress() { if(confirm("Wissen?")) { localStorage.clear(); location.reload(); } }
+
+    window.onload = () => { updateStats(); renderDashboard(); };
+</script>
+</body>
+</html>
