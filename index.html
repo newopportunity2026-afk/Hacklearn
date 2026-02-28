@@ -1,0 +1,155 @@
+<!DOCTYPE html>
+<html lang="nl">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no">
+    <title>HackLearn Pro</title>
+    <meta name="apple-mobile-web-app-capable" content="yes">
+    <style>
+        @import url('https://fonts.googleapis.com/css2?family=JetBrains+Mono:wght@400;700&family=Rajdhani:wght@500;700&display=swap');
+        :root { --bg: #1a1a2e; --bg2: #16213e; --card: #1e1e38; --red: #e94560; --text: #d8d8f0; --border: #2a2a50; }
+        * { margin: 0; padding: 0; box-sizing: border-box; }
+        body { font-family: 'Rajdhani', sans-serif; background: var(--bg); color: var(--text); }
+        
+        .sidebar { width: 260px; background: var(--bg2); border-right: 1px solid var(--border); position: fixed; height: 100vh; z-index: 100; transition: 0.3s; }
+        .main { margin-left: 260px; min-height: 100vh; }
+        
+        @media (max-width: 900px) {
+            .sidebar { transform: translateX(-100%); }
+            .sidebar.open { transform: translateX(0); }
+            .main { margin-left: 0; }
+        }
+
+        .nav-item { padding: 15px 20px; cursor: pointer; border-bottom: 1px solid var(--border); font-weight: bold; }
+        .nav-item:hover { background: rgba(255,255,255,0.05); }
+
+        .topbar { padding: 15px; background: var(--bg2); border-bottom: 1px solid var(--border); display: flex; align-items: center; gap: 10px; }
+        .screen { display: none; padding: 20px; }
+        .screen.active { display: block; }
+
+        .grid { display: grid; grid-template-columns: repeat(auto-fill, minmax(200px, 1fr)); gap: 15px; }
+        .card { background: var(--card); border: 1px solid var(--border); border-radius: 10px; padding: 15px; cursor: pointer; text-align: center; }
+        .q-box { background: var(--card); padding: 20px; border-radius: 10px; border: 1px solid var(--border); }
+        .opt { display: block; width: 100%; padding: 12px; margin-top: 10px; background: var(--bg); border: 1px solid var(--border); color: white; border-radius: 6px; cursor: pointer; }
+        
+        .btn { padding: 8px 15px; border-radius: 5px; border: none; cursor: pointer; background: var(--red); color: white; font-weight: bold; }
+    </style>
+</head>
+<body>
+
+<aside class="sidebar" id="sidebar">
+    <div style="padding: 20px; border-bottom: 1px solid var(--border); color: var(--red); font-weight: bold;">HACKLEARN MENU</div>
+    <div class="nav-item" onclick="nav('dashboard')">🏠 Dashboard</div>
+    <div class="nav-item" onclick="nav('lessons')">📚 Lessen</div>
+    <div class="nav-item" onclick="nav('attackbox')">💻 AttackBox</div>
+    <div style="padding: 20px; margin-top: auto;">
+        <button class="btn" style="width: 100%;" onclick="resetAll()">Reset App</button>
+    </div>
+</aside>
+
+<main class="main">
+    <div class="topbar">
+        <button class="btn" onclick="toggleMenu()">☰ Menu</button>
+        <div id="bread">DASHBOARD</div>
+    </div>
+
+    <div id="sc-dashboard" class="screen active">
+        <h2 style="margin-bottom: 20px;">Modules</h2>
+        <div class="grid" id="chapterGrid"></div>
+    </div>
+
+    <div id="sc-lessons" class="screen">
+        <div id="lessonContent">Selecteer eerst een hoofdstuk op het dashboard.</div>
+    </div>
+
+    <div id="sc-attackbox" class="screen">
+        <div style="background: #000; padding: 20px; border-radius: 10px; font-family: 'JetBrains Mono'; min-height: 200px; border: 1px solid var(--border);">
+            <div style="color: #0f0;">KALI LINUX SIMULATOR v1.0</div>
+            <div id="termOut" style="margin-top: 10px; color: #ccc;">Typ iets en druk op enter...</div>
+            <input type="text" id="termIn" style="background: transparent; border: none; color: white; width: 100%; outline: none; margin-top: 10px;" onkeydown="term(event)">
+        </div>
+    </div>
+</main>
+
+<script>
+    const data = [
+        {id:0, t:'Lab Setup', q:'Welke modus isoleert je netwerk?', o:['Host-Only','NAT','Bridged'], a:0},
+        {id:1, t:'Verkenning', q:'Welke tool voor DNS informatie?', o:['Ping','dnsrecon','Whois'], a:1},
+        {id:2, t:'Scanning', q:'Wat doet Nmap -sV?', o:['Snelle scan','Versiedetectie','OS-detectie'], a:1},
+        {id:3, t:'Metasploit', q:'Wat is een Payload?', o:['De aanvalscode','De firewall','De hardware'], a:0}
+    ];
+
+    let state = JSON.parse(localStorage.getItem('h_state')) || { xp: 0, done: [] };
+
+    function nav(id) {
+        document.querySelectorAll('.screen').forEach(s => s.classList.remove('active'));
+        document.getElementById('sc-' + id).classList.add('active');
+        document.getElementById('bread').innerText = id.toUpperCase();
+        if (window.innerWidth < 900) toggleMenu();
+    }
+
+    function toggleMenu() {
+        document.getElementById('sidebar').classList.toggle('open');
+    }
+
+    function render() {
+        const grid = document.getElementById('chapterGrid');
+        grid.innerHTML = data.map(c => `
+            <div class="card" onclick="openL(${c.id})">
+                <div style="font-size: 2rem; margin-bottom: 10px;">🛡️</div>
+                <strong>${c.t}</strong>
+                <div style="font-size: 0.7rem; color: #7777a0; margin-top: 5px;">
+                    ${state.done.includes(c.id) ? 'VOLTOOID' : 'STARTEN'}
+                </div>
+            </div>
+        `).join('');
+    }
+
+    function openL(id) {
+        const item = data[id];
+        nav('lessons');
+        const isDone = state.done.includes(id);
+        document.getElementById('lessonContent').innerHTML = `
+            <div class="q-box">
+                <h2>${item.t}</h2>
+                <p style="margin: 15px 0;">${item.q}</p>
+                ${item.o.map((o, i) => `
+                    <button class="opt" onclick="check(${id}, ${i})" ${isDone ? 'disabled' : ''}>${o}</button>
+                `).join('')}
+            </div>
+        `;
+    }
+
+    function check(id, ans) {
+        if (data[id].a === ans) {
+            if (!state.done.includes(id)) {
+                state.done.push(id);
+                localStorage.setItem('h_state', JSON.stringify(state));
+            }
+            alert("Correct!");
+            render();
+            openL(id);
+        } else {
+            alert("Niet juist, probeer het opnieuw.");
+        }
+    }
+
+    function term(e) {
+        if (e.key === 'Enter') {
+            document.getElementById('termOut').innerText = "> " + e.target.value;
+            e.target.value = "";
+        }
+    }
+
+    function resetAll() {
+        if (confirm("Alle voortgang wissen?")) {
+            localStorage.clear();
+            location.reload();
+        }
+    }
+
+    // Start de app
+    window.onload = render;
+</script>
+</body>
+</html>
